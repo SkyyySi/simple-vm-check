@@ -1,0 +1,49 @@
+#!/bin/bash
+
+# simple-vm-check script by SkyyySi. More info @ https://github.com/skyyysi/simple-vm-check
+# Licensed under the unlicense (https://unlicense.org). No rights reserved. Because f*ck copyright.
+
+# The names are defined in variables rather than beeing written 
+# directly into the commands just in case a vm vendor decides
+# it's time to mess user-made scripts up ;)
+ARCHLINUX='archlinux'
+VMWARE='VMware, Inc.'
+VIRTUALBOX='VirtualBox'
+
+if [ "$EUID" -ne 0 ]
+	then
+	  	echo "Please run this script as root. Exiting."
+		exit
+	else
+	DEVICE_TYPE=$(dmidecode -s system-manufacturer)
+	OS_TYPE=$(uname -n)
+	if [ "$OS_TYPE" != "$ARCHLINUX" ]
+		then
+			echo "Very funny, this script is written for Arch Linux only!"
+			echo "However, if you want to, feel free to mod it for your OS :)"
+		exit
+		else
+		if [ "$DEVICE_TYPE" = "$VMWARE" ]
+			then
+				echo "VMware detected. Using open vm tools..."
+				pacman -Sy --needed --noconfirm open-vm-tools
+				systemctl enable vmtoolsd.service
+				systemctl start vmtoolsd.service
+				systemctl enable vmware-vmblock-fuse.service
+				systemctl start vmware-vmblock-fuse.service
+				echo "Open vm tools installed & launched!"
+			exit
+			else
+			if [ "$DEVICE_TYPE" = "$VIRTUALBOX" ]
+			then
+				echo "VirtualBox detected. Using VirtualBox guest additions..."
+				pacman -Sy --needed --noconfirm virtualbox-guest-utils virtualbox-guest-dkms xf86-video-vmware
+				echo "VirtualBox guest additions installed! A reboot may be required"
+			exit
+			else
+#				echo "This device seems to be real. No vm drivers loaded."
+			exit
+			fi
+		fi
+	fi
+fi
